@@ -48,7 +48,10 @@ class DataIngestion:
         Get path to the CSV file located inside 'data' folder.
         """
         current_dir = os.getcwd()
-        csv_path = os.path.join(current_dir, 'data', 'flipkart_product_review.csv')
+        csv_path = os.path.join(current_dir, 'data', 'product_reviews.csv')
+
+        if not os.path.exists(csv_path):
+            csv_path = os.path.join(current_dir, 'data', 'flipkart_product_review.csv')
 
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"CSV file not found at: {csv_path}")
@@ -60,36 +63,48 @@ class DataIngestion:
         Load product data from CSV.
         """
         df = pd.read_csv(self.csv_path)
-        expected_columns = {'product_title', 'rating', 'summary', 'review'}
+        # Check for scraped format or legacy format
+        is_scraped = 'top_reviews' in df.columns
+        is_legacy = 'review' in df.columns
 
-        if not expected_columns.issubset(set(df.columns)):
-            raise ValueError(f"CSV must contain columns: {expected_columns}")
+        if not (is_scraped or is_legacy):
+            raise ValueError(f"CSV must contain either 'top_reviews' or 'review' column. Found columns: {list(df.columns)}")
 
         return df
 
     def transform_data(self):
         """
-        Transform product data into list of LangChain Document objects.
+        Transform product data into list of LangChain Document objects (Option A).
         """
-        product_list = []
+        documents = []
+
+        is_scraped = 'top_reviews' in self.product_data.columns
 
         for _, row in self.product_data.iterrows():
-            product_entry = {
-                "product_name": row['product_title'],
-                "product_rating": row['rating'],
-                "product_summary": row['summary'],
-                "product_review": row['review']
-            }
-            product_list.append(product_entry)
+            if is_scraped:
+                review_content = str(row['top_reviews']) if pd.notna(row['top_reviews']) else ""
+                if not review_content.strip() or review_content.strip() in ["No reviews found", "Invalid product URL"]:
+                    continue
 
-        documents = []
-        for entry in product_list:
-            metadata = {
-                "product_name": entry["product_name"],
-                "product_rating": entry["product_rating"],
-                "product_summary": entry["product_summary"]
-            }
-            doc = Document(page_content=entry["product_review"], metadata=metadata)
+                metadata = {
+                    "product_name": str(row.get('product_title', '')),
+                    "product_rating": str(row.get('rating', '')),
+                    "price": str(row.get('price', '')),
+                    "total_reviews": str(row.get('total_reviews', '')),
+                    "product_id": str(row.get('product_id', ''))
+                }
+            else:
+                review_content = str(row['review']) if pd.notna(row['review']) else ""
+                if not review_content.strip():
+                    continue
+
+                metadata = {
+                    "product_name": str(row.get('product_title', '')),
+                    "product_rating": str(row.get('rating', '')),
+                    "product_summary": str(row.get('summary', ''))
+                }
+
+            doc = Document(page_content=review_content, metadata=metadata)
             documents.append(doc)
 
         print(f"Transformed {len(documents)} documents.")
@@ -99,6 +114,10 @@ class DataIngestion:
         """
         Store documents into AstraDB vector store.
         """
+        if not documents:
+            print("No valid documents to store.")
+            return None, []
+
         collection_name=self.config["astra_db"]["collection_name"]
         vstore = AstraDBVectorStore(
             embedding= self.model_loader.load_embeddings(),
@@ -132,15 +151,16 @@ class DataIngestion:
         documents = self.transform_data()
         vstore, inserted_ids = self.store_in_vector_db(documents)
 
-        # Optionally do a quick search
-        query = "Can you tell me the low budget headphone?"
-        results = vstore.similarity_search(query)
+        if vstore:
+            query = "Can you tell me low budget headphones?"
+            results = vstore.similarity_search(query)
 
-        print(f"\nSample search results for query: '{query}'")
-        for res in results:
-            print(f"Content: {res.page_content}\nMetadata: {res.metadata}\n")
+            print(f"\nSample search results for query: '{query}'")
+            for res in results:
+                print(f"Content: {res.page_content}\nMetadata: {res.metadata}\n")
+        return len(inserted_ids)
 
 # Run if this file is executed directly
 if __name__ == "__main__":
     ingestion = DataIngestion()
-    ingestion.run_pipeline()
+    ingestion.run_pipeline()

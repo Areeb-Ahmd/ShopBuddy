@@ -1,6 +1,6 @@
-# Customer Support System
+# Customer Support System (ShopBuddy Portal)
 
-An AI-powered e-commerce customer support chatbot that answers product-related queries using Retrieval-Augmented Generation (RAG). The system scrapes product reviews from Flipkart, stores them as vector embeddings in DataStax AstraDB, and serves a conversational chat interface backed by Google Gemini.
+An AI-powered e-commerce customer support system & data collection portal that answers product-related queries using Retrieval-Augmented Generation (RAG). The unified portal scrapes product reviews from Flipkart, stores vector embeddings in DataStax AstraDB, and serves a modern, multi-tab web interface backed by Google Gemini.
 
 ---
 
@@ -14,8 +14,6 @@ An AI-powered e-commerce customer support chatbot that answers product-related q
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
-  - [1. Scrape and Ingest Data](#1-scrape-and-ingest-data)
-  - [2. Run the Chat Application](#2-run-the-chat-application)
 - [Docker](#docker)
 - [CI/CD](#cicd)
 - [Environment Variables](#environment-variables)
@@ -25,49 +23,37 @@ An AI-powered e-commerce customer support chatbot that answers product-related q
 
 ## Overview
 
-The Customer Support System is a full-pipeline RAG application designed for e-commerce use cases. It consists of three distinct stages:
+The Customer Support System is a unified, full-pipeline RAG web portal featuring:
 
-1. **Data Collection** — Scrapes product listings and customer reviews from Flipkart using Selenium and BeautifulSoup, and saves the results to a local CSV file.
-2. **Data Ingestion** — Transforms the scraped data into LangChain `Document` objects, generates vector embeddings using the Google Gemini embedding model (`gemini-embedding-001`), and stores them in a DataStax AstraDB vector collection in configurable batches.
-3. **Inference** — Accepts natural-language questions from users via a web chat interface, retrieves the top-k most semantically relevant documents from AstraDB, and generates a grounded, context-aware response using the Gemini `gemini-2.5-flash` LLM through a LangChain LCEL chain.
+1. 💬 **AI Assistant (ShopBuddy Chat)** — Natural-language product Q&A interface retrieving semantically relevant product reviews from AstraDB and generating grounded answers using Gemini `gemini-2.5-flash`.
+2. 📦 **Product Scraper & AstraDB Vector Ingestion** — Web interface to search and scrape Flipkart product reviews using Selenium and BeautifulSoup, and ingest embeddings directly into AstraDB in one click.
+3. 📊 **Scraped Reviews Explorer** — Searchable data table displaying scraped product reviews with CSV export/download functionality.
 
 ---
 
 ## Architecture
 
 ```
-User Query
-    |
-    v
-FastAPI Web Server (main.py)
-    |
-    v
-LangChain LCEL Chain
-    |--- Retriever (AstraDBVectorStore) <--- AstraDB Vector Collection
-    |--- ChatPromptTemplate (prompt_library/prompt.py)
-    |--- ChatGoogleGenerativeAI (Gemini 2.5 Flash)
-    |--- StrOutputParser
-    |
-    v
-Response rendered in chat UI (templates/chat.html)
-
-
-Data Pipeline (run separately):
-Flipkart Website
-    |
-    v
-data_scrapper/scrape_data.py  (Selenium + BeautifulSoup)
-    |
-    v
-data/product_reviews.csv
-    |
-    v
-data_ingestion/ingestion_pipeline.py
-    |--- Google Gemini Embeddings
-    |--- AstraDBVectorStore (batched ingestion)
-    |
-    v
-AstraDB Vector Collection
+                       Unified FastAPI Web Server (main.py)
+                                      |
+         +----------------------------+----------------------------+
+         |                            |                            |
+         v                            v                            v
+  [Tab 1: AI Assistant]     [Tab 2: Scraper & Ingest]    [Tab 3: Review Explorer]
+  POST /get                 POST /api/scrape & /api/ingest GET /api/reviews & /api/download
+         |                            |                            |
+         v                            v                            v
+LangChain LCEL Chain      Flipkart Scraper (Selenium)     Interactive HTML Table & CSV
+ (Gemini 2.5 Flash)                   |                            |
+         |                   data/product_reviews.csv              |
+         +----------------------------+----------------------------+
+                                      |
+                                      v
+                             DataIngestion Pipeline
+                           (Gemini Embedding 001)
+                                      |
+                                      v
+                         DataStax AstraDB Vector DB
 ```
 
 ---
@@ -82,10 +68,9 @@ AstraDB Vector Collection
 | Embedding Model | Google Gemini Embedding 001 |
 | Vector Store | DataStax AstraDB (`langchain-astradb`) |
 | RAG Orchestration | LangChain / LangChain Core (LCEL) |
-| Web Scraping | Selenium (`undetected-chromedriver`), BeautifulSoup |
+| Web Scraping | Selenium (`undetected-chromedriver`), BeautifulSoup4 |
 | Data Processing | Pandas |
-| Ingestion UI | Streamlit |
-| Templating | Jinja2 |
+| Frontend UI | HTML5, CSS3, JavaScript (Bootstrap 4, FontAwesome, jQuery, Jinja2) |
 | Containerization | Docker |
 | CI/CD | GitHub Actions + Amazon ECR |
 | Config Management | YAML (`config/config.yaml`) |
@@ -95,20 +80,19 @@ AstraDB Vector Collection
 ## Project Structure
 
 ```
-customer-support-system/
-|
+Customer-Support-System/
 |-- config/
 |   |-- config.yaml              # Central configuration (models, DB, retriever settings)
 |   |-- config_loader.py         # YAML config loader utility
 |
 |-- data/                        # Scraped CSV data (gitignored)
-|   |-- flipkart_product_review.csv
+|   |-- product_reviews.csv
 |
 |-- data_ingestion/
 |   |-- ingestion_pipeline.py    # Transforms CSV data and loads into AstraDB
 |
 |-- data_scrapper/
-|   |-- scrape_data.py           # Flipkart product and review scraper (Selenium)
+|   |-- scrape_data.py           # Flipkart product and review scraper (Selenium + BeautifulSoup)
 |
 |-- prompt_library/
 |   |-- prompt.py                # LangChain prompt templates for the RAG chain
@@ -116,27 +100,23 @@ customer-support-system/
 |-- retriever/
 |   |-- retrieval.py             # AstraDB vector store retriever wrapper
 |
-|-- scripts/
-|   |-- flipkart_scapper.py      # Standalone scraper script placeholder
-|
 |-- static/
-|   |-- style.css                # Application stylesheet
+|   |-- style.css                # Portal stylesheet
 |
 |-- templates/
-|   |-- chat.html                # Main chat UI (ShopBuddy)
+|   |-- chat.html                # Unified Multi-Tab Portal (ShopBuddy)
 |   |-- base.html                # Base HTML template
-|   |-- index.html               # Landing page
-|   |-- results.html             # Search results page
+|   |-- index.html               # Legacy search page
+|   |-- results.html             # Legacy results table
 |
 |-- utils/
 |   |-- model_loader.py          # Loads Gemini LLM and embedding model instances
 |
 |-- .github/
 |   |-- workflows/
-|       |-- main.yaml            # GitHub Actions: build and push Docker image to Amazon ECR
+|       |-- main.yaml            # GitHub Actions: build and push Docker image to ECR
 |
-|-- main.py                      # FastAPI application entry point
-|-- scrapper_ingestion_ui.py     # Streamlit UI for scraping and ingesting data
+|-- main.py                      # FastAPI application entry point & API routes
 |-- setup.py                     # Python package setup
 |-- requirements.txt             # Python dependencies
 |-- Dockerfile                   # Container build definition
@@ -217,41 +197,21 @@ llm:
 
 ## Usage
 
-### 1. Scrape and Ingest Data
-
-The data pipeline must be run before starting the chat application to populate the vector store.
-
-**Option A — Streamlit UI (recommended)**
-
-The Streamlit interface provides a graphical workflow to scrape products and trigger ingestion:
+Start the unified application server with a single command:
 
 ```bash
-streamlit run scrapper_ingestion_ui.py
+python main.py
 ```
-
-This launches a UI where you can:
-- Enter one or more product names to search on Flipkart
-- Configure the number of products and reviews to scrape per query
-- Download the resulting CSV
-- Push the scraped data into AstraDB with a single click
-
-**Option B — Run ingestion directly**
-
-If you already have a CSV file at `data/flipkart_product_review.csv` with the required columns (`product_title`, `rating`, `summary`, `review`), run the ingestion pipeline directly:
-
+*or*
 ```bash
-python -m data_ingestion.ingestion_pipeline
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The pipeline ingests documents in batches of 50 and respects API rate limits by pausing between batches.
+Open your browser and navigate to `http://localhost:8000` to access all features:
 
-### 2. Run the Chat Application
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-Open your browser and navigate to `http://localhost:8000`. Click the chat icon in the bottom-right corner to open the ShopBuddy chat widget and begin asking product-related queries.
+- 💬 **AI Assistant Tab**: Click the floating chat icon or "Start Chatting Now" to ask product questions.
+- 📦 **Scraper & Ingestion Tab**: Enter product keywords, click **🚀 Start Scraping**, and click **🧠 Store in Vector DB (AstraDB)** to update the vector database.
+- 📊 **Reviews Explorer Tab**: Filter and search through scraped review data or download `product_reviews.csv`.
 
 ---
 
@@ -290,8 +250,6 @@ The repository includes a GitHub Actions workflow (`.github/workflows/main.yaml`
 | `AWS_SECRET_ACCESS_KEY` | AWS IAM secret access key |
 | `AWS_SESSION_TOKEN` | AWS session token (if using temporary credentials) |
 
-The workflow targets the `us-east-1` region and pushes to an ECR repository named `customer-support-system`.
-
 ---
 
 ## Environment Variables
@@ -316,3 +274,4 @@ The workflow targets the `us-east-1` region and pushes to an ECR repository name
 ---
 
 **Author:** Syed Areeb Ahmad — [ahmad.syedareeb7@gmail.com](mailto:ahmad.syedareeb7@gmail.com)
+

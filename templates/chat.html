@@ -2,125 +2,186 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ShopBuddy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopBuddy - E-Commerce Assistant & Scraper Portal</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-
-        /* Floating Chat Icon */
-        .chatbot-icon {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background-color: #007bff;
-            color: white;
-            border-radius: 50%;
-            padding: 15px;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .chat-popup {
-            position: fixed;
-            bottom: 90px;
-            right: 30px;
-            width: 350px;
-            max-height: 500px;
-            display: none;
-            z-index: 1001;
-        }
-
-        .chat .card {
-            border-radius: 15px;
-        }
-
-        .msg_cotainer_send, .msg_cotainer {
-            background-color: #f1f1f1;
-            border-radius: 10px;
-            padding: 10px;
-            margin-top: 5px;
-        }
-
-        .msg_time, .msg_time_send {
-            font-size: 10px;
-            color: gray;
-        }
-
-        .user_img_msg {
-            width: 30px;
-            height: 30px;
-            margin-left: 5px;
-        }
-
-        /* Static Content Styling */
-        .hero {
-            padding: 50px;
-            text-align: center;
-            background: #f8f9fa;
-        }
-
-        .hero h1 {
-            font-size: 40px;
-            margin-bottom: 20px;
-        }
-
-        .hero p {
-            font-size: 18px;
-        }
-
-        .footer {
-            position: relative;
-            bottom: 0;
-            width: 100%;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-
-
-    </style>
 </head>
 <body>
 
-    <div class="hero d-flex flex-column align-items-center justify-content-center text-center" style="height: 90vh; background: linear-gradient(to right, #eef2f3, #8e9eab); animation: fadeIn 1s ease-out;">
-        <h1 class="display-3 font-weight-bold mb-3 gradient-text">Welcome to ShopBuddy</h1>
-        <p class="lead mb-4 text-dark">Your Smart Shopping Companion – Ask about prices, offers, reviews & more!</p>
-        <img src="/static/f6634145-b9d9-4ea1-b5e5-cb705192c6fd.png" alt="ShopBuddy Assistant" class="img-fluid shadow-lg" style="max-width: 300px; border-radius: 20px; transform: scale(1); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-    </div>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-shopping-cart text-warning mr-2"></i> ShopBuddy Portal
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto" id="portalTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="tab-home" href="javascript:void(0)" onclick="switchTab('home')">
+                            <i class="fas fa-robot mr-1"></i> AI Assistant
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-scraper" href="javascript:void(0)" onclick="switchTab('scraper')">
+                            <i class="fas fa-spider mr-1"></i> Scraper & Ingestion
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-reviews" href="javascript:void(0)" onclick="switchTab('reviews')">
+                            <i class="fas fa-table mr-1"></i> Reviews Explorer
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
+    <!-- Main Container -->
+    <div class="container tab-content-container">
 
+        <!-- TAB 1: AI ASSISTANT & HERO -->
+        <div id="panel-home" class="tab-panel">
+            <div class="hero d-flex flex-column align-items-center justify-content-center text-center py-5" style="background: linear-gradient(to right, #eef2f3, #8e9eab); border-radius: 20px;">
+                <h1 class="display-3 font-weight-bold mb-3 gradient-text">Welcome to ShopBuddy</h1>
+                <p class="lead mb-4 text-dark font-weight-normal" style="max-width: 650px;">
+                    Your Smart Shopping Companion – Ask about prices, product recommendations, customer reviews & more!
+                </p>
+                <img src="/static/f6634145-b9d9-4ea1-b5e5-cb705192c6fd.png" alt="ShopBuddy Assistant" class="img-fluid shadow-lg mb-4" style="max-width: 280px; border-radius: 20px; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <button class="btn btn-warning btn-lg font-weight-bold shadow px-4 text-dark" onclick="$('#chatPopup').fadeIn();">
+                    <i class="fas fa-comments mr-2"></i> Start Chatting Now
+                </button>
+            </div>
+        </div>
 
-    <!-- Chatbot Floating Icon -->
-    <div class="chatbot-icon" id="openChat">
-        <i class="fas fa-comments fa-lg"></i>
-    </div>
+        <!-- TAB 2: SCRAPER & INGESTION -->
+        <div id="panel-scraper" class="tab-panel d-none">
+            <div class="card portal-card">
+                <div class="portal-card-header d-flex align-items-center justify-content-between">
+                    <span><i class="fas fa-spider mr-2"></i> Product Review Scraper & Vector DB Ingestion</span>
+                    <span class="badge badge-warning text-dark font-weight-bold">AstraDB Powered</span>
+                </div>
+                <div class="card-body p-4">
+                    <div id="scraperAlert" class="alert d-none" role="alert"></div>
 
-    <!-- Chatbot Popup -->
-    <div class="chat-popup" id="chatPopup">
-        <div class="card">
-            <div class="card-header msg_head">
-                <div class="d-flex bd-highlight">
-                    <div class="img_cont">
-                        <img src="https://static.vecteezy.com/system/resources/previews/016/017/018/non_2x/ecommerce-icon-free-png.png" class="rounded-circle user_img" width="40">
+                    <form id="scraperForm">
+                        <div class="form-group mb-4">
+                            <label class="font-weight-bold text-dark mb-2">🛒 Product Keywords / Names</label>
+                            <div id="productInputsContainer">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control product-input" placeholder="e.g. Wireless Headphones" required>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="addProductBtn">
+                                <i class="fas fa-plus mr-1"></i> Add Another Product
+                            </button>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="font-weight-bold text-dark mb-1">📝 Optional Product Description Keyword</label>
+                            <textarea class="form-control" id="productDescription" rows="2" placeholder="Enter extra search keywords or specific specifications..."></textarea>
+                        </div>
+
+                        <div class="form-row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark">Max Products per Search</label>
+                                <input type="number" class="form-control" id="maxProducts" min="1" max="10" value="1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark">Reviews per Product</label>
+                                <input type="number" class="form-control" id="reviewCount" min="1" max="10" value="2" required>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 pt-2">
+                            <button type="submit" class="btn btn-primary font-weight-bold mr-2 mb-2 px-4" id="startScrapeBtn">
+                                <i class="fas fa-paper-plane mr-1"></i> 🚀 Start Scraping
+                            </button>
+                            <button type="button" class="btn btn-success font-weight-bold mr-2 mb-2 px-4" id="ingestBtn">
+                                <i class="fas fa-brain mr-1"></i> 🧠 Store in Vector DB (AstraDB)
+                            </button>
+                            <a href="/api/download" class="btn btn-outline-dark font-weight-bold mb-2 px-4" id="downloadBtn">
+                                <i class="fas fa-download mr-1"></i> 📥 Download CSV
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: REVIEWS EXPLORER -->
+        <div id="panel-reviews" class="tab-panel d-none">
+            <div class="card portal-card">
+                <div class="portal-card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-table mr-2"></i> Scraped Reviews Explorer</span>
+                    <button class="btn btn-sm btn-light" onclick="loadReviewsTable()">
+                        <i class="fas fa-sync-alt mr-1"></i> Refresh Table
+                    </button>
+                </div>
+                <div class="card-body p-4">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <input type="text" class="form-control" id="reviewSearchInput" placeholder="Search product title, rating, or review text...">
                     </div>
-                    <div class="user_info ml-2">
-                        <span>QuickCart Help</span><br>
-                        <small>Ask your queries</small>
-                    </div>
-                    <div class="ml-auto">
-                        <button class="btn btn-sm btn-danger" id="closeChat">&times;</button>
+
+                    <div class="table-responsive table-custom">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product Title</th>
+                                    <th>Rating</th>
+                                    <th>Total Reviews</th>
+                                    <th>Price</th>
+                                    <th width="35%">Top Reviews</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reviewsTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">Loading review data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-            <div id="messageFormeight" class="card-body msg_card_body" style="overflow-y: auto; height: 300px;"></div>
+        </div>
+
+    </div>
+
+    <!-- Floating Chatbot Icon -->
+    <div class="chatbot-icon" id="openChat" title="Open ShopBuddy Chat">
+        <i class="fas fa-comments fa-2x"></i>
+    </div>
+
+    <!-- Floating Chatbot Popup -->
+    <div class="chat-popup" id="chatPopup">
+        <div class="card">
+            <div class="card-header msg_head">
+                <div class="d-flex bd-highlight align-items-center">
+                    <div class="img_cont mr-2">
+                        <img src="https://static.vecteezy.com/system/resources/previews/016/017/018/non_2x/ecommerce-icon-free-png.png" class="rounded-circle user_img" width="40">
+                    </div>
+                    <div class="user_info">
+                        <span class="h6 mb-0 text-white font-weight-bold">ShopBuddy Help</span><br>
+                        <small class="text-light">Ask your product queries</small>
+                    </div>
+                    <div class="ml-auto">
+                        <button class="btn btn-sm btn-danger rounded-circle px-2 py-0" id="closeChat">&times;</button>
+                    </div>
+                </div>
+            </div>
+            <div id="messageFormeight" class="card-body msg_card_body"></div>
             <div class="card-footer">
                 <form id="messageArea" class="input-group">
-                    <input type="text" id="text" name="msg" placeholder="Type message..." class="form-control type_msg" required>
+                    <input type="text" id="text" name="msg" placeholder="Type message..." class="form-control type_msg" required autocomplete="off">
                     <div class="input-group-append">
                         <button type="submit" id="send" class="input-group-text send_btn"><i class="fas fa-paper-plane"></i></button>
                     </div>
@@ -129,29 +190,130 @@
         </div>
     </div>
 
-    <!-- JS Logic -->
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 bg-dark text-white text-center">
+        <div class="container">
+            <p class="mb-1">© 2026 Customer Support System - ShopBuddy Unified Portal</p>
+            <p class="mb-0">Need help? <a href="mailto:support@example.com" class="text-warning">support@example.com</a></p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
     <script>
+        // Tab Switcher Function
+        function switchTab(tabName) {
+            $('.nav-link').removeClass('active');
+            $('.tab-panel').addClass('d-none');
+
+            $(`#tab-${tabName}`).addClass('active');
+            $(`#panel-${tabName}`).removeClass('d-none');
+
+            if (tabName === 'reviews') {
+                loadReviewsTable();
+            }
+        }
+
         $(document).ready(function() {
-            // Open Chat Popup
+            // Chat Popup Controls
             $("#openChat").click(function() {
                 $("#chatPopup").fadeIn();
             });
 
-            // Close Chat Popup
             $("#closeChat").click(function() {
                 $("#chatPopup").fadeOut();
             });
 
-            // Handle Chat Submit
-            $("#messageArea").on("submit", function(event) {
-                const date = new Date();
-                const hour = date.getHours();
-                const minute = String(date.getMinutes()).padStart(2, '0');
-                const str_time = `${hour}:${minute}`;
-                var rawText = $("#text").val();
+            // Dynamic Product Input Adding
+            $("#addProductBtn").click(function() {
+                const count = $(".product-input").length + 1;
+                const newInputHtml = `
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control product-input" placeholder="Product ${count}">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-danger remove-product-btn" type="button"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>`;
+                $("#productInputsContainer").append(newInputHtml);
+            });
 
-                var userHtml = `
-                    <div class="d-flex justify-content-end mb-2">
+            $(document).on('click', '.remove-product-btn', function() {
+                $(this).closest('.input-group').remove();
+            });
+
+            // Handle Scraping Form Submission
+            $("#scraperForm").on("submit", function(e) {
+                e.preventDefault();
+
+                const productInputs = [];
+                $(".product-input").each(function() {
+                    if ($(this).val().trim()) {
+                        productInputs.push($(this).val().trim());
+                    }
+                });
+
+                const productDescription = $("#productDescription").val();
+                const maxProducts = parseInt($("#maxProducts").val());
+                const reviewCount = parseInt($("#reviewCount").val());
+
+                if (productInputs.length === 0 && !productDescription.trim()) {
+                    showAlert('warning', '⚠️ Please enter at least one product name or description.');
+                    return;
+                }
+
+                $("#startScrapeBtn").html('<span class="spinner-overlay mr-1"></span> Scraping Flipkart...').prop('disabled', true);
+                showAlert('info', '🔍 Scraping initiated. Please wait while products are retrieved...');
+
+                $.ajax({
+                    url: '/api/scrape',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        product_inputs: productInputs,
+                        product_description: productDescription,
+                        max_products: maxProducts,
+                        review_count: reviewCount
+                    }),
+                    success: function(response) {
+                        $("#startScrapeBtn").html('<i class="fas fa-paper-plane mr-1"></i> 🚀 Start Scraping').prop('disabled', false);
+                        showAlert('success', `✅ ${response.message}`);
+                    },
+                    error: function(xhr) {
+                        $("#startScrapeBtn").html('<i class="fas fa-paper-plane mr-1"></i> 🚀 Start Scraping').prop('disabled', false);
+                        const err = xhr.responseJSON ? xhr.responseJSON.detail : 'Scraping failed.';
+                        showAlert('danger', `❌ ${err}`);
+                    }
+                });
+            });
+
+            // Handle Ingestion Button Click
+            $("#ingestBtn").click(function() {
+                $("#ingestBtn").html('<span class="spinner-overlay mr-1"></span> Ingesting to AstraDB...').prop('disabled', true);
+                showAlert('info', '📡 Data Ingestion pipeline running... Storing embeddings in AstraDB.');
+
+                $.ajax({
+                    url: '/api/ingest',
+                    type: 'POST',
+                    success: function(response) {
+                        $("#ingestBtn").html('<i class="fas fa-brain mr-1"></i> 🧠 Store in Vector DB (AstraDB)').prop('disabled', false);
+                        showAlert('success', `✅ ${response.message}`);
+                    },
+                    error: function(xhr) {
+                        $("#ingestBtn").html('<i class="fas fa-brain mr-1"></i> 🧠 Store in Vector DB (AstraDB)').prop('disabled', false);
+                        const err = xhr.responseJSON ? xhr.responseJSON.detail : 'Ingestion failed.';
+                        showAlert('danger', `❌ ${err}`);
+                    }
+                });
+            });
+
+            // Handle Chat Message Submit
+            $("#messageArea").on("submit", function(event) {
+                event.preventDefault();
+                const date = new Date();
+                const str_time = `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                const rawText = $("#text").val();
+
+                const userHtml = `
+                    <div class="d-flex justify-content-end mb-3">
                         <div class="msg_cotainer_send">${rawText}
                             <div class="msg_time_send">${str_time}</div>
                         </div>
@@ -166,8 +328,8 @@
                     type: "POST",
                     url: "/get",
                 }).done(function(data) {
-                    var botHtml = `
-                        <div class="d-flex justify-content-start mb-2">
+                    const botHtml = `
+                        <div class="d-flex justify-content-start mb-3">
                             <img src="https://static.vecteezy.com/system/resources/previews/016/017/018/non_2x/ecommerce-icon-free-png.png" class="rounded-circle user_img_msg">
                             <div class="msg_cotainer">${data}
                                 <div class="msg_time">${str_time}</div>
@@ -176,18 +338,48 @@
                     $("#messageFormeight").append(botHtml);
                     $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
                 });
+            });
 
-                event.preventDefault();
+            // Review Search Filter
+            $("#reviewSearchInput").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#reviewsTableBody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
             });
         });
-    </script>
-    <!-- 👇 Add this just before </body> -->
-    <footer class="footer mt-auto py-3 bg-dark text-white text-center">
-        <div class="container">
-            <p class="mb-1">© 2025 Customer Support System</p>
-            <p class="mb-0">Need help? <a href="mailto:support@example.com" class="text-warning">support@example.com</a></p>
-        </div>
-    </footer>
 
+        // Helper Alert Function
+        function showAlert(type, text) {
+            $("#scraperAlert").removeClass('d-none alert-info alert-success alert-warning alert-danger')
+                             .addClass(`alert-${type}`)
+                             .html(text);
+        }
+
+        // Fetch & Load Reviews into Table
+        function loadReviewsTable() {
+            $.get('/api/reviews', function(response) {
+                const tbody = $("#reviewsTableBody");
+                tbody.empty();
+
+                if (response.status === 'success' && response.reviews.length > 0) {
+                    response.reviews.forEach(row => {
+                        const tr = `
+                            <tr>
+                                <td><code>${row.product_id || 'N/A'}</code></td>
+                                <td class="font-weight-bold">${row.product_title || 'N/A'}</td>
+                                <td><span class="badge badge-success">${row.rating || 'N/A'} ⭐</span></td>
+                                <td>${row.total_reviews || 'N/A'}</td>
+                                <td><span class="text-primary font-weight-bold">${row.price || 'N/A'}</span></td>
+                                <td><small class="text-muted">${row.top_reviews || 'N/A'}</small></td>
+                            </tr>`;
+                        tbody.append(tr);
+                    });
+                } else {
+                    tbody.append(`<tr><td colspan="6" class="text-center py-4 text-muted">No scraped review data found. Please run the scraper first.</td></tr>`);
+                }
+            });
+        }
+    </script>
 </body>
-</html>
+</html>
