@@ -19,7 +19,8 @@ from prompt_library.prompt import PROMPT_TEMPLATES
 from data_scrapper.scrape_data import scrape_flipkart_products, save_to_csv
 from data_ingestion.ingestion_pipeline import DataIngestion
 
-app = FastAPI(title="ShopBuddy - Unified E-Commerce Assistant Portal")
+app = FastAPI(title="ShopBuddy - Unified E-Commerce Assistant")
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")

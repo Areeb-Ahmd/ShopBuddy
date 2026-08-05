@@ -1,74 +1,112 @@
+/* Global & Typography */
+:root {
+    --bg-gradient: linear-gradient(135deg, #eef2f6 0%, #cbd5e1 50%, #94a3b8 100%);
+    --slate-dark: #1e293b;
+    --slate-muted: #475569;
+    --primary-blue: #0066ff;
+    --accent-blue: #0284c7;
+    --accent-amber: #f59e0b;
+    --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
 body,
 html {
     height: 100%;
     margin: 0;
-    background: linear-gradient(to right, #26333D, #323741, #21214E);
-    font-family: 'Roboto', 'Arial', sans-serif;
-    color: #333;
+    background: var(--bg-gradient);
+    font-family: 'Inter', 'Roboto', 'Arial', sans-serif;
+    color: var(--slate-dark);
 }
 
 /* Header & Navigation Bar */
 .navbar-custom {
-    background-color: #2874f0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background-color: var(--slate-dark);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: 12px 0;
 }
 
 .navbar-custom .navbar-brand {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.4rem;
+    font-weight: 800;
     color: #ffffff !important;
+    letter-spacing: -0.5px;
 }
 
 .navbar-custom .nav-link {
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: rgba(255, 255, 255, 0.8) !important;
     font-weight: 600;
-    padding: 10px 18px;
-    border-radius: 8px;
-    margin-right: 5px;
+    padding: 9px 20px;
+    border-radius: 20px;
+    margin-right: 6px;
     transition: all 0.25s ease;
 }
 
-.navbar-custom .nav-link:hover,
+.navbar-custom .nav-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 .navbar-custom .nav-link.active {
-    color: #2874f0 !important;
-    background-color: #ffe033; /* Flipkart Yellow */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    color: #ffffff !important;
+    background-color: var(--primary-blue);
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.35);
 }
 
 /* Tab Panels */
 .tab-content-container {
-    min-height: 80vh;
-    padding-top: 25px;
-    padding-bottom: 40px;
+    min-height: 82vh;
+    padding-top: 35px;
+    padding-bottom: 50px;
 }
 
 /* Hero Section */
 .hero {
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    background: transparent;
 }
 
-.gradient-text {
-    background: linear-gradient(135deg, #2874f0, #17a2b8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.hero h1 {
+    color: var(--slate-dark);
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.hero p {
+    color: var(--slate-muted);
+    font-size: 1.15rem;
+}
+
+/* Elevated White Logo Container (Mock Image Style) */
+.hero-card-container {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    padding: 35px;
+    display: inline-block;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hero-card-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
 }
 
 /* Portal Cards */
 .portal-card {
     background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    border: none;
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(226, 232, 240, 0.9);
     overflow: hidden;
 }
 
 .portal-card-header {
-    background-color: #2874f0;
+    background-color: var(--slate-dark);
     color: white;
-    padding: 18px 24px;
-    font-weight: bold;
-    font-size: 1.25rem;
+    padding: 20px 28px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Floating Chat Icon & Popup */
@@ -76,126 +114,134 @@ html {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background-color: #2874f0;
+    background-color: var(--primary-blue);
     color: white;
     border-radius: 50%;
-    padding: 16px 18px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     z-index: 1000;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease, background-color 0.2s;
+    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4);
+    transition: transform 0.25s ease, background-color 0.25s ease;
 }
 
 .chatbot-icon:hover {
     transform: scale(1.1);
-    background-color: #ffe033;
-    color: #2874f0;
+    background-color: #0052cc;
 }
 
 .chat-popup {
     position: fixed;
-    bottom: 95px;
+    bottom: 100px;
     right: 30px;
-    width: 370px;
-    max-height: 520px;
+    width: 380px;
+    max-height: 530px;
     display: none;
     z-index: 1001;
 }
 
 .chat .card {
-    height: 480px;
-    border-radius: 20px;
-    background-color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.4);
+    height: 500px;
+    border-radius: 24px;
+    background-color: #ffffff;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    overflow: hidden;
 }
 
 .card-header {
-    background-color: #2874f0;
+    background-color: var(--slate-dark);
     color: white;
-    border-radius: 20px 20px 0 0;
+    border-radius: 24px 24px 0 0;
     border: none;
-    padding: 15px;
+    padding: 16px 20px;
 }
 
 .msg_card_body {
     overflow-y: auto;
-    background: #e9f3fb;
+    background: #f8fafc;
     padding: 20px;
 }
 
 .card-footer {
-    border-top: none;
+    border-top: 1px solid #e2e8f0;
     background: white;
-    border-radius: 0 0 20px 20px;
-    padding: 10px;
+    border-radius: 0 0 24px 24px;
+    padding: 12px 16px;
 }
 
 .type_msg {
-    background-color: #f1f3f5;
-    color: #333;
-    border: 1px solid #ced4da;
-    height: 45px;
-    border-radius: 12px;
-    padding: 10px;
+    background-color: #f1f5f9;
+    color: var(--slate-dark);
+    border: 1px solid #cbd5e1;
+    height: 46px;
+    border-radius: 14px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
 }
 
 .type_msg:focus {
     box-shadow: none;
     outline: none;
-    border-color: #2874f0;
+    border-color: var(--primary-blue);
+    background-color: #ffffff;
 }
 
 .send_btn {
-    background-color: #2874f0;
+    background-color: var(--primary-blue);
     color: white;
     border: none;
-    border-radius: 0 12px 12px 0;
+    border-radius: 0 14px 14px 0;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.25s ease;
+    padding: 0 18px;
 }
 
 .send_btn:hover {
-    background-color: #1a5ac9;
+    background-color: #0052cc;
 }
 
 .msg_cotainer {
-    background: white;
-    color: black;
-    padding: 10px 15px;
+    background: #ffffff;
+    color: var(--slate-dark);
+    padding: 12px 16px;
     border-radius: 18px;
     margin-left: 10px;
-    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
     position: relative;
     max-width: 75%;
     font-size: 0.95rem;
 }
 
 .msg_cotainer_send {
-    background: #ffe033; /* Flipkart Yellow */
-    color: #111;
+    background: var(--primary-blue);
+    color: #ffffff;
     font-weight: 500;
-    padding: 10px 15px;
+    padding: 12px 16px;
     border-radius: 18px;
     margin-right: 10px;
-    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0px 4px 12px rgba(0, 102, 255, 0.2);
     position: relative;
     max-width: 75%;
     font-size: 0.95rem;
 }
 
-.msg_time,
-.msg_time_send {
+.msg_time {
     position: absolute;
     font-size: 10px;
-    color: rgba(0, 0, 0, 0.45);
-}
-
-.msg_time {
+    color: #94a3b8;
     left: 0;
     bottom: -18px;
 }
 
 .msg_time_send {
+    position: absolute;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
     right: 0;
     bottom: -18px;
 }
@@ -214,18 +260,40 @@ html {
 /* Reviews Table Styling */
 .table-custom {
     background: white;
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
+    border: 1px solid #e2e8f0;
 }
 
 .table-custom th {
-    background-color: #2874f0;
+    background-color: var(--slate-dark);
     color: white;
     border: none;
+    font-weight: 600;
+    padding: 14px 16px;
 }
 
 .table-custom td {
     vertical-align: middle;
+    padding: 14px 16px;
+    color: var(--slate-dark);
+}
+
+/* Footer (Mock Image Dark Theme) */
+.footer-custom {
+    background-color: var(--slate-dark) !important;
+    color: #94a3b8 !important;
+    padding: 20px 0;
+}
+
+.footer-custom a {
+    color: var(--accent-amber) !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.footer-custom a:hover {
+    text-decoration: underline;
 }
 
 /* Loading Spinners */
@@ -250,8 +318,9 @@ html {
 
 @media(max-width: 576px) {
     .chat-popup {
-        width: 90%;
-        right: 5%;
-        bottom: 80px;
+        width: 92%;
+        right: 4%;
+        bottom: 85px;
     }
-}
+}
+

@@ -1,8 +1,10 @@
-# Customer Support System (ShopBuddy Portal)
+# ShopBuddy - AI Customer Support System
 
-An AI-powered e-commerce customer support system & data collection portal that answers product-related queries using Retrieval-Augmented Generation (RAG). The unified portal scrapes product reviews from Flipkart, stores vector embeddings in DataStax AstraDB, and serves a modern, multi-tab web interface backed by Google Gemini.
+An AI-powered e-commerce customer support system & data collection system that answers product-related queries using Retrieval-Augmented Generation (RAG). The unified platform scrapes product reviews from Flipkart, stores vector embeddings in DataStax AstraDB, and serves a modern, multi-tab web interface backed by Google Gemini.
 
 ---
+
+
 
 ## Table of Contents
 
