@@ -8,3 +8,12 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# GCP Service Account Key
+key.json
+
+# Data directory
+data/
+
+# Docker
+docker-compose.override.yml
