@@ -16,7 +16,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from retriever.retrieval import Retriever
 from utils.model_loader import ModelLoader
 from prompt_library.prompt import PROMPT_TEMPLATES
-from data_scrapper.scrape_data import scrape_flipkart_products, save_to_csv
 from data_ingestion.ingestion_pipeline import DataIngestion
 
 app = FastAPI(title="ShopBuddy - Unified E-Commerce Assistant")
@@ -36,6 +35,10 @@ app.add_middleware(
 load_dotenv()
 retriever_obj = Retriever()
 model_loader = ModelLoader()
+
+def is_cloud_deployment() -> bool:
+    """Check if running on cloud (GCP Cloud Run)."""
+    return os.environ.get("DEPLOYMENT_ENV", "local").lower() == "gcp"
 
 class ScrapeRequest(BaseModel):
     product_inputs: List[str]
@@ -57,6 +60,13 @@ def invoke_chain(query:str):
     output = chain.invoke(query)
     return output
 
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint for Cloud Run liveness probes.
+    """
+    return {"status": "healthy", "service": "shopbuddy"}
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """
@@ -75,6 +85,14 @@ async def scrape_products(payload: ScrapeRequest):
     """
     Trigger product review scraping from Flipkart.
     """
+    if is_cloud_deployment():
+        raise HTTPException(
+            status_code=403,
+            detail="This feature is only available when running locally. Please run ShopBuddy on your local machine to use the scraper and data pipeline."
+        )
+
+    from data_scrapper.scrape_data import scrape_flipkart_products, save_to_csv
+
     try:
         search_queries = [p.strip() for p in payload.product_inputs if p.strip()]
         if payload.product_description and payload.product_description.strip():
@@ -115,6 +133,12 @@ async def ingest_vector_db():
     """
     Run data ingestion pipeline to store CSV reviews into AstraDB.
     """
+    if is_cloud_deployment():
+        raise HTTPException(
+            status_code=403,
+            detail="This feature is only available when running locally. Please run ShopBuddy on your local machine to use the scraper and data pipeline."
+        )
+
     try:
         ingestion = DataIngestion()
         inserted_count = ingestion.run_pipeline()
@@ -131,6 +155,12 @@ async def get_reviews():
     """
     Return scraped reviews from product_reviews.csv for HTML table rendering.
     """
+    if is_cloud_deployment():
+        raise HTTPException(
+            status_code=403,
+            detail="This feature is only available when running locally. Please run ShopBuddy on your local machine to use the scraper and data pipeline."
+        )
+
     csv_path = "data/product_reviews.csv"
     if not os.path.exists(csv_path):
         return {"status": "empty", "reviews": []}
@@ -150,7 +180,17 @@ async def download_csv():
     """
     Download product_reviews.csv file.
     """
+    if is_cloud_deployment():
+        raise HTTPException(
+            status_code=403,
+            detail="This feature is only available when running locally. Please run ShopBuddy on your local machine to use the scraper and data pipeline."
+        )
+
     csv_path = "data/product_reviews.csv"
     if not os.path.exists(csv_path):
         raise HTTPException(status_code=404, detail="CSV file not found. Please run scraper first.")
-    return FileResponse(path=csv_path, filename="product_reviews.csv", media_type="text/csv")
+    return FileResponse(path=csv_path, filename="product_reviews.csv", media_type="text/csv")
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
