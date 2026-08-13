@@ -106,11 +106,11 @@
                             </div>
                         </div>
 
-                        <div class="d-flex flex-wrap gap-2 pt-2">
-                            <button type="submit" class="btn btn-primary font-weight-bold mr-2 mb-2 px-4" id="startScrapeBtn" style="border-radius: 12px;">
+                        <div class="d-flex flex-column flex-sm-row flex-wrap pt-2 scraper-btn-group">
+                            <button type="submit" class="btn btn-primary font-weight-bold mr-0 mr-sm-2 mb-2 px-4" id="startScrapeBtn" style="border-radius: 12px;">
                                 <i class="fas fa-paper-plane mr-1"></i> 🚀 Start Scraping
                             </button>
-                            <button type="button" class="btn btn-success font-weight-bold mr-2 mb-2 px-4" id="ingestBtn" style="border-radius: 12px;">
+                            <button type="button" class="btn btn-success font-weight-bold mr-0 mr-sm-2 mb-2 px-4" id="ingestBtn" style="border-radius: 12px;">
                                 <i class="fas fa-brain mr-1"></i> 🧠 Store in Vector DB (AstraDB)
                             </button>
                             <a href="/api/download" class="btn btn-outline-dark font-weight-bold mb-2 px-4" id="downloadBtn" style="border-radius: 12px;">
@@ -217,6 +217,11 @@
 
             $(`#tab-${tabName}`).addClass('active');
             $(`#panel-${tabName}`).removeClass('d-none');
+
+            // Auto-collapse mobile navbar after selecting tab
+            if ($('#navbarNav').hasClass('show')) {
+                $('#navbarNav').collapse('hide');
+            }
 
             if (tabName === 'reviews') {
                 loadReviewsTable();
@@ -410,5 +415,6 @@
             });
         }
     </script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
