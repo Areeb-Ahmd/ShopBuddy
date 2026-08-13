@@ -20,5 +20,6 @@ setup(
         "undetected-chromedriver",
         "selenium",
         "beautifulsoup4",
+        "pyyaml",
     ]
 )

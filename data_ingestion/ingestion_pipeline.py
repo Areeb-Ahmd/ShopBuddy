@@ -150,14 +150,6 @@ class DataIngestion:
         """
         documents = self.transform_data()
         vstore, inserted_ids = self.store_in_vector_db(documents)
-
-        if vstore:
-            query = "Can you tell me low budget headphones?"
-            results = vstore.similarity_search(query)
-
-            print(f"\nSample search results for query: '{query}'")
-            for res in results:
-                print(f"Content: {res.page_content}\nMetadata: {res.metadata}\n")
         return len(inserted_ids)
 
 # Run if this file is executed directly

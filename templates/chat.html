@@ -347,6 +347,17 @@
                         </div>`;
                     $("#messageFormeight").append(botHtml);
                     $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
+                }).fail(function(xhr) {
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.detail ? xhr.responseJSON.detail : "Sorry, an error occurred while processing your request. Please try again.";
+                    const errorHtml = `
+                        <div class="d-flex justify-content-start mb-3">
+                            <img src="https://static.vecteezy.com/system/resources/previews/016/017/018/non_2x/ecommerce-icon-free-png.png" class="rounded-circle user_img_msg">
+                            <div class="msg_cotainer text-danger">⚠️ ${errorMsg}
+                                <div class="msg_time">${str_time}</div>
+                            </div>
+                        </div>`;
+                    $("#messageFormeight").append(errorHtml);
+                    $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
                 });
             });
 

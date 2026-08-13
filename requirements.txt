@@ -11,6 +11,7 @@ langchain_core
 undetected-chromedriver
 selenium
 beautifulsoup4
+pyyaml
 
 # local packages 
 -e .
