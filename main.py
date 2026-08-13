@@ -38,7 +38,7 @@ def is_cloud_deployment() -> bool:
 class ScrapeRequest(BaseModel):
     product_inputs: List[str]
     product_description: Optional[str] = ""
-    max_products: int = Field(default=1, ge=1, le=10, description="Max products per search query (1 to 10)")
+    max_products: int = Field(default=1, ge=1, le=50, description="Max products per search query (1 to 50)")
     review_count: int = Field(default=2, ge=1, le=10, description="Reviews per product (1 to 10)")
 
 def invoke_chain(query: str):
