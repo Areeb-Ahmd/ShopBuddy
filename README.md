@@ -96,7 +96,7 @@ ShopBuddy/
 │   └── product_reviews.csv
 ├── data_ingestion/
 │   └── ingestion_pipeline.py    # Transforms CSV data and loads into AstraDB
-├── data_scrapper/
+├── data_scraper/
 │   └── scrape_data.py           # Flipkart product and review scraper (Selenium + BeautifulSoup)
 ├── prompt_library/
 │   └── prompt.py                # LangChain prompt templates for the RAG chain
@@ -106,10 +106,7 @@ ShopBuddy/
 │   ├── style.css                # Portal stylesheet
 │   └── f6634145-...png
 ├── templates/
-│   ├── base.html                # Base HTML template
-│   ├── chat.html                # Unified Multi-Tab Portal (ShopBuddy)
-│   ├── index.html               # Search page template
-│   └── results.html             # Results table template
+│   └── chat.html                # Unified Multi-Tab Portal (ShopBuddy)
 ├── utils/
 │   └── model_loader.py          # Loads Gemini LLM and embedding model instances
 ├── .dockerignore
