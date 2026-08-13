@@ -45,13 +45,13 @@ The Customer Support System is a unified, full-pipeline RAG web portal featuring
          |                            |                            |
          v                            v                            v
 LangChain LCEL Chain      Flipkart Scraper (Selenium)     Interactive HTML Table & CSV
- (Gemini 2.5 Flash)                   |                            |
+(Gemini 3.1 Flash Lite)               |                            |
          |                   data/product_reviews.csv              |
          +----------------------------+----------------------------+
                                       |
                                       v
                              DataIngestion Pipeline
-                           (Gemini Embedding 001)
+                    (Gemini Embedding 001 + Upsert IDs)
                                       |
                                       v
                          DataStax AstraDB Vector DB
@@ -66,12 +66,12 @@ LangChain LCEL Chain      Flipkart Scraper (Selenium)     Interactive HTML Table
 |---|---|
 | Web Framework | FastAPI |
 | ASGI Server | Uvicorn |
-| LLM | Google Gemini 2.5 Flash (`langchain-google-genai`) |
-| Embedding Model | Google Gemini Embedding 001 |
-| Vector Store | DataStax AstraDB (`langchain-astradb`) |
+| LLM | Google Gemini 3.1 Flash Lite (`gemini-3.1-flash-lite`) |
+| Embedding Model | Google Gemini Embedding 001 (`models/gemini-embedding-001`) |
+| Vector Store | DataStax AstraDB (`langchain-astradb`) with Deterministic Upsert IDs |
 | RAG Orchestration | LangChain / LangChain Core (LCEL) |
 | Web Scraping | Selenium (`undetected-chromedriver`), BeautifulSoup4 |
-| Data Processing | Pandas |
+| Data Processing | Pandas (UTF-8-SIG Excel sanitization & deduplication) |
 | Frontend UI | HTML5, CSS3, JavaScript (Bootstrap 4, FontAwesome, jQuery, Jinja2) |
 | Containerization | Docker & Docker Compose |
 | Cloud Hosting | Google Cloud Run |
@@ -92,18 +92,19 @@ ShopBuddy/
 ├── config/
 │   ├── config.yaml              # Central configuration (models, DB, retriever settings)
 │   └── config_loader.py         # YAML config loader utility
-├── data/                        # Scraped CSV data (gitignored)
+├── data/                        # Scraped CSV dataset (1,100+ unique products)
 │   └── product_reviews.csv
 ├── data_ingestion/
-│   └── ingestion_pipeline.py    # Transforms CSV data and loads into AstraDB
+│   └── ingestion_pipeline.py    # Transforms CSV data and loads into AstraDB with UPSERT IDs
 ├── data_scraper/
 │   └── scrape_data.py           # Flipkart product and review scraper (Selenium + BeautifulSoup)
 ├── prompt_library/
 │   └── prompt.py                # LangChain prompt templates for the RAG chain
 ├── retriever/
-│   └── retrieval.py             # AstraDB vector store retriever wrapper
+│   ├── retrieval.py             # AstraDB vector store retriever wrapper
+│   └── chain_loader.py          # LCEL chain loader with Gemini 3.1 Flash Lite
 ├── static/
-│   ├── style.css                # Portal stylesheet
+│   ├── style.css                # Modern glassmorphism stylesheet
 │   └── f6634145-...png
 ├── templates/
 │   └── chat.html                # Unified Multi-Tab Portal (ShopBuddy)
@@ -179,7 +180,7 @@ PORT=8080
 
 ```yaml
 astra_db:
-  collection_name: "customersupportsystem"
+  collection_name: "shopbuddy"
 
 embedding_model:
   provider: "google"
