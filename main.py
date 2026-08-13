@@ -1,5 +1,6 @@
 import os
 import csv
+import asyncio
 from typing import List, Optional
 import uvicorn 
 from fastapi import FastAPI, Request, Form, HTTPException
@@ -10,12 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from retriever.retrieval import Retriever
-from utils.model_loader import ModelLoader
-from prompt_library.prompt import PROMPT_TEMPLATES
+from retriever.chain_loader import ChainLoader
 from data_ingestion.ingestion_pipeline import DataIngestion
 
 app = FastAPI(title="ShopBuddy - Unified E-Commerce Assistant")
@@ -33,8 +29,7 @@ app.add_middleware(
 )
 
 load_dotenv()
-retriever_obj = Retriever()
-model_loader = ModelLoader()
+chain_loader = ChainLoader()
 
 def is_cloud_deployment() -> bool:
     """Check if running on cloud (GCP Cloud Run)."""
@@ -46,19 +41,8 @@ class ScrapeRequest(BaseModel):
     max_products: int = Field(default=1, ge=1, le=10, description="Max products per search query (1 to 10)")
     review_count: int = Field(default=2, ge=1, le=10, description="Reviews per product (1 to 10)")
 
-def invoke_chain(query:str):
-    retriever = retriever_obj.load_retriever()
-    prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATES["product_bot"])
-    llm = model_loader.load_llm()
-    
-    chain=(
-        {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-    output = chain.invoke(query)
-    return output
+def invoke_chain(query: str):
+    return chain_loader.invoke(query)
 
 @app.get("/health")
 async def health_check():
@@ -75,8 +59,8 @@ async def index(request: Request):
     return templates.TemplateResponse(request=request, name="chat.html")
 
 @app.post("/get", response_class=HTMLResponse)
-async def chat(msg:str=Form(...)):
-    result = invoke_chain(msg)
+async def chat(msg: str = Form(...)):
+    result = await asyncio.to_thread(invoke_chain, msg)
     print(f'Response: {result}')
     return result
 
@@ -91,7 +75,7 @@ async def scrape_products(payload: ScrapeRequest):
             detail="This feature is only available when running locally. Please run ShopBuddy on your local machine to use the scraper and data pipeline."
         )
 
-    from data_scrapper.scrape_data import scrape_flipkart_products, save_to_csv
+    from data_scrapper.scrape_data import run_scrape_workflow
 
     try:
         search_queries = [p.strip() for p in payload.product_inputs if p.strip()]
@@ -101,21 +85,9 @@ async def scrape_products(payload: ScrapeRequest):
         if not search_queries:
             raise HTTPException(status_code=400, detail="Please enter at least one product name or description.")
 
-        final_data = []
-        for query in search_queries:
-            results = scrape_flipkart_products(query, max_products=payload.max_products, review_count=payload.review_count)
-            final_data.extend(results)
-
-        # Deduplicate products by product title/link
-        unique_products = {}
-        for row in final_data:
-            if len(row) > 1 and row[1] not in unique_products:
-                unique_products[row[1]] = row
-
-        scraped_list = list(unique_products.values())
-        os.makedirs("data", exist_ok=True)
-        csv_output_path = "data/product_reviews.csv"
-        save_to_csv(scraped_list, csv_output_path)
+        scraped_list = await asyncio.to_thread(
+            run_scrape_workflow, search_queries, payload.max_products, payload.review_count
+        )
 
         return {
             "status": "success",
@@ -141,7 +113,7 @@ async def ingest_vector_db():
 
     try:
         ingestion = DataIngestion()
-        inserted_count = ingestion.run_pipeline()
+        inserted_count = await asyncio.to_thread(ingestion.run_pipeline)
         return {
             "status": "success",
             "message": f"Data successfully ingested into AstraDB! ({inserted_count} document batches processed)",
@@ -149,6 +121,7 @@ async def ingest_vector_db():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+
 
 @app.get("/api/reviews")
 async def get_reviews():

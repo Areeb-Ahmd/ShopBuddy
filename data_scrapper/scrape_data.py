@@ -94,3 +94,24 @@ def save_to_csv(data, filename="data/product_reviews.csv"):
         writer = csv.writer(f)
         writer.writerow(["product_id", "product_title", "rating", "total_reviews", "price", "top_reviews"])
         writer.writerows(data)
+
+def run_scrape_workflow(search_queries, max_products=1, review_count=2):
+    """
+    Orchestrate scraping across queries, deduplicate products, and save output CSV.
+    """
+    final_data = []
+    for query in search_queries:
+        results = scrape_flipkart_products(query, max_products=max_products, review_count=review_count)
+        final_data.extend(results)
+
+    unique_products = {}
+    for row in final_data:
+        if len(row) > 1 and row[1] not in unique_products:
+            unique_products[row[1]] = row
+
+    scraped_list = list(unique_products.values())
+    os.makedirs("data", exist_ok=True)
+    csv_output_path = "data/product_reviews.csv"
+    save_to_csv(scraped_list, csv_output_path)
+    return scraped_list
+
