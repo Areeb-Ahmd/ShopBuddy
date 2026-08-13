@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt setup.py ./
 COPY config/ ./config/
 COPY data_ingestion/ ./data_ingestion/
-COPY data_scrapper/ ./data_scrapper/
+COPY data_scraper/ ./data_scraper/
 COPY prompt_library/ ./prompt_library/
 COPY retriever/ ./retriever/
 COPY utils/ ./utils/
@@ -29,7 +29,7 @@ COPY --from=builder /install /usr/local
 COPY main.py setup.py requirements.txt ./
 COPY config/ ./config/
 COPY data_ingestion/ ./data_ingestion/
-COPY data_scrapper/ ./data_scrapper/
+COPY data_scraper/ ./data_scraper/
 COPY prompt_library/ ./prompt_library/
 COPY retriever/ ./retriever/
 COPY utils/ ./utils/

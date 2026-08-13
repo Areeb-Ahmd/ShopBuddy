@@ -47,11 +47,17 @@ class DataIngestion:
         """
         Get path to the CSV file located inside 'data' folder.
         """
-        current_dir = os.getcwd()
-        csv_path = os.path.join(current_dir, 'data', 'product_reviews.csv')
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        csv_path = os.path.join(base_dir, 'data', 'product_reviews.csv')
 
         if not os.path.exists(csv_path):
-            csv_path = os.path.join(current_dir, 'data', 'flipkart_product_review.csv')
+            csv_path = os.path.join(base_dir, 'data', 'flipkart_product_review.csv')
+
+        if not os.path.exists(csv_path):
+            current_dir = os.getcwd()
+            csv_path = os.path.join(current_dir, 'data', 'product_reviews.csv')
+            if not os.path.exists(csv_path):
+                csv_path = os.path.join(current_dir, 'data', 'flipkart_product_review.csv')
 
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"CSV file not found at: {csv_path}")

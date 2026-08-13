@@ -75,7 +75,7 @@ async def scrape_products(payload: ScrapeRequest):
             detail="This feature is only available when running locally. Please run ShopBuddy on your local machine to use the scraper and data pipeline."
         )
 
-    from data_scrapper.scrape_data import run_scrape_workflow
+    from data_scraper.scrape_data import run_scrape_workflow
 
     try:
         search_queries = [p.strip() for p in payload.product_inputs if p.strip()]

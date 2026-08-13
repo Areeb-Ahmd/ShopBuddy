@@ -8,7 +8,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
 
-os.makedirs("data", exist_ok=True)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+DEFAULT_CSV_PATH = os.path.join(DATA_DIR, "product_reviews.csv")
+os.makedirs(DATA_DIR, exist_ok=True)
 
 def get_top_reviews(product_url, count=2):
     options = uc.ChromeOptions()
@@ -89,7 +92,8 @@ def scrape_flipkart_products(query, max_products=1, review_count=2):
     driver.quit()
     return products
 
-def save_to_csv(data, filename="data/product_reviews.csv"):
+def save_to_csv(data, filename=DEFAULT_CSV_PATH):
+    os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
     with open(filename, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["product_id", "product_title", "rating", "total_reviews", "price", "top_reviews"])
@@ -110,8 +114,7 @@ def run_scrape_workflow(search_queries, max_products=1, review_count=2):
             unique_products[row[1]] = row
 
     scraped_list = list(unique_products.values())
-    os.makedirs("data", exist_ok=True)
-    csv_output_path = "data/product_reviews.csv"
-    save_to_csv(scraped_list, csv_output_path)
+    save_to_csv(scraped_list, DEFAULT_CSV_PATH)
     return scraped_list
+
 
