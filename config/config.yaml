@@ -1,5 +1,5 @@
 astra_db:
-  collection_name: "customersupportsystem"
+  collection_name: "shopbuddy"
   
 embedding_model:
   provider: "google"
