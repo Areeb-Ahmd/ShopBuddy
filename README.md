@@ -26,7 +26,7 @@ An AI-powered e-commerce customer support system & data collection system that a
 
 The Customer Support System is a unified, full-pipeline RAG web portal featuring:
 
-1. 💬 **AI Assistant (ShopBuddy Chat)** — Natural-language product Q&A interface retrieving semantically relevant product reviews from AstraDB and generating grounded answers using Gemini `gemini-2.5-flash`.
+1. 💬 **AI Assistant (ShopBuddy Chat)** — Natural-language product Q&A interface retrieving semantically relevant product reviews from AstraDB and generating grounded answers using Gemini `gemini-3.1-flash-lite`.
 2. 📦 **Product Scraper & AstraDB Vector Ingestion** — Web interface to search and scrape Flipkart product reviews using Selenium and BeautifulSoup, and ingest embeddings directly into AstraDB in one click (functional when running locally).
 3. 📊 **Scraped Reviews Explorer** — Searchable data table displaying scraped product reviews with CSV export/download functionality (functional when running locally).
 
@@ -190,7 +190,7 @@ retriever:
 
 llm:
   provider: "google"
-  model_name: "gemini-2.5-flash"
+  model_name: "gemini-3.1-flash-lite"
 ```
 
 ---
