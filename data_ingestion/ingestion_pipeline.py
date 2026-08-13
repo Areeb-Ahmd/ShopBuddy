@@ -89,7 +89,7 @@ class DataIngestion:
         for _, row in self.product_data.iterrows():
             if is_scraped:
                 review_content = str(row['top_reviews']) if pd.notna(row['top_reviews']) else ""
-                if not review_content.strip() or review_content.strip() in ["No reviews found", "Invalid product URL"]:
+                if not review_content.strip() or any(invalid in review_content for invalid in ["No reviews found", "Invalid product URL", "Sorry, no results found"]):
                     continue
 
                 metadata = {
