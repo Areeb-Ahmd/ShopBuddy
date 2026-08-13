@@ -1,5 +1,6 @@
 import os
 import time
+import hashlib
 import pandas as pd
 from dotenv import load_dotenv
 from typing import List, Tuple
@@ -41,8 +42,6 @@ class DataIngestion:
         self.db_application_token = os.getenv("ASTRA_DB_APPLICATION_TOKEN")
         self.db_keyspace = os.getenv("ASTRA_DB_KEYSPACE")
 
-       
-
     def _get_csv_path(self):
         """
         Get path to the CSV file located inside 'data' folder.
@@ -51,13 +50,8 @@ class DataIngestion:
         csv_path = os.path.join(base_dir, 'data', 'product_reviews.csv')
 
         if not os.path.exists(csv_path):
-            csv_path = os.path.join(base_dir, 'data', 'flipkart_product_review.csv')
-
-        if not os.path.exists(csv_path):
             current_dir = os.getcwd()
             csv_path = os.path.join(current_dir, 'data', 'product_reviews.csv')
-            if not os.path.exists(csv_path):
-                csv_path = os.path.join(current_dir, 'data', 'flipkart_product_review.csv')
 
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"CSV file not found at: {csv_path}")
@@ -69,46 +63,29 @@ class DataIngestion:
         Load product data from CSV.
         """
         df = pd.read_csv(self.csv_path)
-        # Check for scraped format or legacy format
-        is_scraped = 'top_reviews' in df.columns
-        is_legacy = 'review' in df.columns
-
-        if not (is_scraped or is_legacy):
-            raise ValueError(f"CSV must contain either 'top_reviews' or 'review' column. Found columns: {list(df.columns)}")
+        if 'top_reviews' not in df.columns:
+            raise ValueError(f"CSV must contain 'top_reviews' column. Found columns: {list(df.columns)}")
 
         return df
 
     def transform_data(self):
         """
-        Transform product data into list of LangChain Document objects (Option A).
+        Transform product data into list of LangChain Document objects.
         """
         documents = []
 
-        is_scraped = 'top_reviews' in self.product_data.columns
-
         for _, row in self.product_data.iterrows():
-            if is_scraped:
-                review_content = str(row['top_reviews']) if pd.notna(row['top_reviews']) else ""
-                if not review_content.strip() or any(invalid in review_content for invalid in ["No reviews found", "Invalid product URL", "Sorry, no results found"]):
-                    continue
+            review_content = str(row['top_reviews']) if pd.notna(row['top_reviews']) else ""
+            if not review_content.strip() or any(invalid in review_content for invalid in ["No reviews found", "Invalid product URL", "Sorry, no results found"]):
+                continue
 
-                metadata = {
-                    "product_name": str(row.get('product_title', '')),
-                    "product_rating": str(row.get('rating', '')),
-                    "price": str(row.get('price', '')),
-                    "total_reviews": str(row.get('total_reviews', '')),
-                    "product_id": str(row.get('product_id', ''))
-                }
-            else:
-                review_content = str(row['review']) if pd.notna(row['review']) else ""
-                if not review_content.strip():
-                    continue
-
-                metadata = {
-                    "product_name": str(row.get('product_title', '')),
-                    "product_rating": str(row.get('rating', '')),
-                    "product_summary": str(row.get('summary', ''))
-                }
+            metadata = {
+                "product_name": str(row.get('product_title', '')),
+                "product_rating": str(row.get('rating', '')),
+                "price": str(row.get('price', '')),
+                "total_reviews": str(row.get('total_reviews', '')),
+                "product_id": str(row.get('product_id', ''))
+            }
 
             doc = Document(page_content=review_content, metadata=metadata)
             documents.append(doc)
@@ -118,7 +95,7 @@ class DataIngestion:
 
     def store_in_vector_db(self, documents: List[Document]):
         """
-        Store documents into AstraDB vector store.
+        Store documents into AstraDB vector store with deterministic document IDs for UPSERT deduplication.
         """
         if not documents:
             print("No valid documents to store.")
@@ -138,8 +115,18 @@ class DataIngestion:
         
         for i in range(0, len(documents), batch_size):
             batch = documents[i:i + batch_size]
+
+            # Generate deterministic document IDs to enforce native AstraDB UPSERT behavior
+            batch_ids_keys = []
+            for doc in batch:
+                pid = str(doc.metadata.get("product_id", "")).strip()
+                if not pid or pid in ["N/A", "nan"]:
+                    pname = str(doc.metadata.get("product_name", "")).strip()
+                    pid = f"doc_{hashlib.md5(pname.encode('utf-8')).hexdigest()}"
+                batch_ids_keys.append(pid)
+
             print(f"Inserting batch {i//batch_size + 1}/{(len(documents)-1)//batch_size + 1} ({len(batch)} documents)...")
-            batch_ids = vstore.add_documents(batch)
+            batch_ids = vstore.add_documents(batch, ids=batch_ids_keys)
             if batch_ids:
                 inserted_ids.extend(batch_ids)
                 
