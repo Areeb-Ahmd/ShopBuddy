@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 from langchain_core.runnables import RunnablePassthrough
@@ -43,8 +43,8 @@ def is_cloud_deployment() -> bool:
 class ScrapeRequest(BaseModel):
     product_inputs: List[str]
     product_description: Optional[str] = ""
-    max_products: int = 1
-    review_count: int = 2
+    max_products: int = Field(default=1, ge=1, le=10, description="Max products per search query (1 to 10)")
+    review_count: int = Field(default=2, ge=1, le=10, description="Reviews per product (1 to 10)")
 
 def invoke_chain(query:str):
     retriever = retriever_obj.load_retriever()
