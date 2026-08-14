@@ -1,6 +1,6 @@
-# ShopBuddy - AI Customer Support System
+# ShopBuddy — RAG-Powered E-Commerce Product Assistant
 
-An AI-powered e-commerce customer support system & data collection system that answers product-related queries using Retrieval-Augmented Generation (RAG). The unified platform scrapes product reviews from Flipkart, stores vector embeddings in DataStax AstraDB, and serves a modern, multi-tab web interface backed by Google Gemini.
+An end-to-end AI-powered e-commerce product recommendation and review intelligence platform built with Retrieval-Augmented Generation (RAG). ShopBuddy scrapes live product reviews from Flipkart, stores vector embeddings in DataStax AstraDB, and serves a modern, responsive multi-tab web interface powered by Google Gemini.
 
 ---
 
@@ -24,11 +24,11 @@ An AI-powered e-commerce customer support system & data collection system that a
 
 ## Overview
 
-The Customer Support System is a unified, full-pipeline RAG web portal featuring:
+ShopBuddy is a unified, full-pipeline RAG web portal featuring:
 
-1. 💬 **AI Assistant (ShopBuddy Chat)** — Natural-language product Q&A interface retrieving semantically relevant product reviews from AstraDB and generating grounded answers using Gemini `gemini-3.1-flash-lite`.
-2. 📦 **Product Scraper & AstraDB Vector Ingestion** — Web interface to search and scrape Flipkart product reviews using Selenium and BeautifulSoup, and ingest embeddings directly into AstraDB in one click (functional when running locally).
-3. 📊 **Scraped Reviews Explorer** — Searchable data table displaying scraped product reviews with CSV export/download functionality (functional when running locally).
+1. 💬 **AI Assistant (ShopBuddy Chat)** — Natural-language product Q&A powered by semantic retrieval from AstraDB and grounded answer generation using Gemini `gemini-3.1-flash-lite`.
+2. 📦 **Product Scraper & AstraDB Vector Ingestion** — Web interface to search and scrape Flipkart product reviews using Selenium and BeautifulSoup, then ingest embeddings directly into AstraDB in one click (functional when running locally).
+3. 📊 **Dataset Reviews Explorer** — Searchable, filterable product review catalog with native mobile card view and desktop data table, displaying 1,100+ cataloged products with live search filtering.
 
 ---
 
@@ -40,11 +40,11 @@ The Customer Support System is a unified, full-pipeline RAG web portal featuring
          +----------------------------+----------------------------+
          |                            |                            |
          v                            v                            v
-  [Tab 1: AI Assistant]     [Tab 2: Scraper & Ingest]*   [Tab 3: Review Explorer]*
-  POST /get                 POST /api/scrape & /api/ingest GET /api/reviews & /api/download
+  [Tab 1: AI Assistant]     [Tab 2: Scraper & Ingest]*   [Tab 3: Review Explorer]
+  POST /get                 POST /api/scrape & /api/ingest GET /api/reviews & /api/download*
          |                            |                            |
          v                            v                            v
-LangChain LCEL Chain      Flipkart Scraper (Selenium)     Interactive HTML Table & CSV
+LangChain LCEL Chain      Flipkart Scraper (Selenium)     Interactive Table & Mobile Cards
 (Gemini 3.1 Flash Lite)               |                            |
          |                   data/product_reviews.csv              |
          +----------------------------+----------------------------+
@@ -56,7 +56,10 @@ LangChain LCEL Chain      Flipkart Scraper (Selenium)     Interactive HTML Table
                                       v
                          DataStax AstraDB Vector DB
 ```
-*\*Note: Scraper and data pipeline endpoints are gated when deployed on Google Cloud Run (`DEPLOYMENT_ENV=gcp`) and return a friendly 403 response indicating the feature is local-only.*
+
+> **Deployment Note:**
+> - Scraper (`/api/scrape`), ingestion (`/api/ingest`), and download (`/api/download`) endpoints are gated when deployed on Google Cloud Run (`DEPLOYMENT_ENV=gcp`) and return a 403 response indicating the feature is local-only.
+> - The Reviews Explorer (`/api/reviews`) is a **read-only GET endpoint** available on both local and cloud deployments, serving the bundled `product_reviews.csv` dataset.
 
 ---
 
@@ -104,10 +107,10 @@ ShopBuddy/
 │   ├── retrieval.py             # AstraDB vector store retriever wrapper
 │   └── chain_loader.py          # LCEL chain loader with Gemini 3.1 Flash Lite
 ├── static/
-│   ├── style.css                # Modern glassmorphism stylesheet
-│   └── f6634145-...png
+│   ├── style.css                # Modern glassmorphism stylesheet with mobile responsiveness
+│   └── f6634145-...png          # ShopBuddy logo asset
 ├── templates/
-│   └── chat.html                # Unified Multi-Tab Portal (ShopBuddy)
+│   └── chat.html                # Unified Multi-Tab Portal (desktop table + mobile card views)
 ├── utils/
 │   └── model_loader.py          # Loads Gemini LLM and embedding model instances
 ├── .dockerignore
@@ -210,9 +213,9 @@ uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 
 Open your browser and navigate to `http://localhost:8080` to access all features:
 
-- 💬 **AI Assistant Tab**: Ask product queries and get AI answers backed by Gemini and AstraDB.
+- 💬 **AI Assistant Tab**: Ask product queries and get AI answers backed by Gemini and AstraDB vector retrieval.
 - 📦 **Scraper & Ingestion Tab**: Search and scrape Flipkart reviews locally, then store embeddings into AstraDB.
-- 📊 **Reviews Explorer Tab**: Filter, search, and download scraped product review CSVs locally.
+- 📊 **Reviews Explorer Tab**: Filter, search, and browse 1,100+ cataloged product reviews with live search. On mobile, products are displayed as native card views for optimal usability.
 
 ---
 
@@ -321,4 +324,4 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml
 
 ---
 
-**Author:** Syed Areeb Ahmad — [ahmad.syedareeb7@gmail.com](mailto:ahmad.syedareeb7@gmail.com)
+**Author:** Syed Areeb Ahmad — [ahmad.syedareeb7@gmail.com](mailto:ahmad.syedareeb7@gmail.com) | [GitHub](https://github.com/Areeb-Ahmd) | [LinkedIn](https://www.linkedin.com/in/areeb-ahmad7)

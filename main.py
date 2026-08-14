@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from retriever.chain_loader import ChainLoader
 from data_ingestion.ingestion_pipeline import DataIngestion
 
-app = FastAPI(title="ShopBuddy - Unified E-Commerce Assistant")
+app = FastAPI(title="ShopBuddy - RAG-Powered E-Commerce Product Assistant")
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -127,13 +127,8 @@ async def ingest_vector_db():
 async def get_reviews():
     """
     Return scraped reviews from product_reviews.csv for HTML table rendering.
+    Safe read-only GET endpoint available on local and cloud deployment.
     """
-    if is_cloud_deployment():
-        raise HTTPException(
-            status_code=403,
-            detail="This feature is only available when running locally. Please run ShopBuddy on your local machine to use the scraper and data pipeline."
-        )
-
     csv_path = "data/product_reviews.csv"
     if not os.path.exists(csv_path):
         return {"status": "empty", "reviews": []}
