@@ -1,275 +1,325 @@
-# ShopBuddy — RAG-Powered E-Commerce Product Assistant
+# ShopBuddy
 
-An end-to-end AI-powered e-commerce product recommendation and review intelligence platform built with Retrieval-Augmented Generation (RAG). ShopBuddy scrapes live product reviews from Flipkart, stores vector embeddings in DataStax AstraDB, and serves a modern, responsive multi-tab web interface powered by Google Gemini.
+![Python Version](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
+![Google Gemini](https://img.shields.io/badge/Google%20Gemini-gemini--3.1--flash--lite-4285F4?style=flat-square&logo=google)
+![LangChain](https://img.shields.io/badge/LangChain-LCEL-1C3C3C?style=flat-square)
+![DataStax AstraDB](https://img.shields.io/badge/AstraDB-Cassandra%20Vector-black?style=flat-square&logo=datastax)
+![Selenium](https://img.shields.io/badge/Selenium-Undetected%20Chromedriver-43B02A?style=flat-square&logo=selenium)
+![GCP Cloud Run](https://img.shields.io/badge/Deploy-GCP%20Cloud%20Run-4285F4?style=flat-square&logo=googlecloud)
+![Docker](https://img.shields.io/badge/Docker-Multi--Stage-2496ED?style=flat-square&logo=docker&logoColor=white)
+
+A Retrieval-Augmented Generation (RAG) assistant and automated data pipeline that extracts live e-commerce product reviews from Flipkart, indexes them into a DataStax AstraDB vector store, and delivers grounded product insights via Google Gemini.
 
 ---
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Architecture](#architecture)
+- [System Architecture](#system-architecture)
 - [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Docker & Docker Compose](#docker--docker-compose)
+- [Repository Structure](#repository-structure)
+- [Getting Started](#getting-started)
+- [Running with Docker](#running-with-docker)
+- [Data Pipeline Workflows](#data-pipeline-workflows)
+- [API Reference](#api-reference)
+- [Configuration Reference](#configuration-reference)
 - [Google Cloud Run Deployment](#google-cloud-run-deployment)
 - [CI/CD Pipeline](#cicd-pipeline)
-- [Environment Variables](#environment-variables)
 - [Contributing](#contributing)
+- [Author](#author)
 
 ---
 
 ## Overview
 
-ShopBuddy is a unified, full-pipeline RAG web portal featuring:
+ShopBuddy bridges automated web data extraction with retrieval-augmented generation. The system extracts review data directly from Flipkart listings using browser automation, creates vector embeddings using Google Generative AI, stores them in DataStax AstraDB, and serves an interactive single-page application (SPA) powered by FastAPI.
 
-1. 💬 **AI Assistant (ShopBuddy Chat)** — Natural-language product Q&A powered by semantic retrieval from AstraDB and grounded answer generation using Gemini `gemini-3.1-flash-lite`.
-2. 📦 **Product Scraper & AstraDB Vector Ingestion** — Web interface to search and scrape Flipkart product reviews using Selenium and BeautifulSoup, then ingest embeddings directly into AstraDB in one click (functional when running locally).
-3. 📊 **Dataset Reviews Explorer** — Searchable, filterable product review catalog with native mobile card view and desktop data table, displaying 1,100+ cataloged products with live search filtering.
+### Core Capabilities
+
+- **RAG-Powered Conversational Engine**: LangChain Expression Language (LCEL) chain (`Retriever -> Prompt Template -> LLM -> StrOutputParser`) executing semantic vector search (`top_k: 10`) across review embeddings.
+- **Automated Web Scraping**: Headless review extraction using `undetected-chromedriver` and BeautifulSoup4 with dynamic product pagination, review parsing, and anti-bot mitigation.
+- **Batch Vector Ingestion**: Deduplication mechanism generating deterministic document IDs (MD5 hashes/product IDs) with rate-limit handling (50 documents per batch).
+- **Single-Page Web Portal**: Jinja2-rendered interface providing real-time vector search exploration, chat UI with suggestion chips, and dataset management.
+- **Cloud-Native Deployment**: Multi-stage Dockerized FastAPI application configured for GCP Cloud Run with automated GitHub Actions CI/CD and deployment-environment feature gating.
 
 ---
 
-## Architecture
+## System Architecture
 
-```
-                       Unified FastAPI Web Server (main.py)
-                                      |
-         +----------------------------+----------------------------+
-         |                            |                            |
-         v                            v                            v
-  [Tab 1: AI Assistant]     [Tab 2: Scraper & Ingest]*   [Tab 3: Review Explorer]
-  POST /get                 POST /api/scrape & /api/ingest GET /api/reviews & /api/download*
-         |                            |                            |
-         v                            v                            v
-LangChain LCEL Chain      Flipkart Scraper (Selenium)     Interactive Table & Mobile Cards
-(Gemini 3.1 Flash Lite)               |                            |
-         |                   data/product_reviews.csv              |
-         +----------------------------+----------------------------+
-                                      |
-                                      v
-                             DataIngestion Pipeline
-                    (Gemini Embedding 001 + Upsert IDs)
-                                      |
-                                      v
-                         DataStax AstraDB Vector DB
-```
+```mermaid
+flowchart LR
+    subgraph Client [User Interface]
+        UI["SPA Interface\n(chat.html / Bootstrap 4)"]
+    end
 
-> **Deployment Note:**
-> - Scraper (`/api/scrape`), ingestion (`/api/ingest`), and download (`/api/download`) endpoints are gated when deployed on Google Cloud Run (`DEPLOYMENT_ENV=gcp`) and return a 403 response indicating the feature is local-only.
-> - The Reviews Explorer (`/api/reviews`) is a **read-only GET endpoint** available on both local and cloud deployments, serving the bundled `product_reviews.csv` dataset.
+    subgraph Server [Backend Application]
+        API["FastAPI App\n(main.py)"]
+        Scraper["Selenium Scraper\n(scrape_data.py)"]
+        Ingestion["Ingestion Pipeline\n(ingestion_pipeline.py)"]
+        Chain["LangChain LCEL Chain\n(chain_loader.py)"]
+    end
+
+    subgraph Storage [Data & Persistence]
+        CSV["Local Storage\n(product_reviews.csv)"]
+        Astra["DataStax AstraDB\n(Vector Collection)"]
+    end
+
+    subgraph External [Google AI Services]
+        Embeddings["gemini-embedding-001"]
+        LLM["gemini-3.1-flash-lite"]
+    end
+
+    UI -->|"Chat Query"| API
+    UI -->|"Trigger Scrape / Ingest"| API
+    API --> Scraper
+    Scraper -->|"Append Rows"| CSV
+    API --> Ingestion
+    Ingestion -->|"Read Reviews"| CSV
+    Ingestion -->|"Generate Embeddings"| Embeddings
+    Ingestion -->|"Batch Upsert"| Astra
+    API --> Chain
+    Chain -->|"Retrieve top_k=10"| Astra
+    Chain -->|"Augmented Prompt"| LLM
+    LLM -->|"Generated Markdown"| Chain
+    Chain -->|"Stream / Return Response"| UI
+```
 
 ---
 
 ## Tech Stack
 
-| Component | Technology |
-|---|---|
-| Web Framework | FastAPI |
-| ASGI Server | Uvicorn |
-| LLM | Google Gemini 3.1 Flash Lite (`gemini-3.1-flash-lite`) |
-| Embedding Model | Google Gemini Embedding 001 (`models/gemini-embedding-001`) |
-| Vector Store | DataStax AstraDB (`langchain-astradb`) with Deterministic Upsert IDs |
-| RAG Orchestration | LangChain / LangChain Core (LCEL) |
-| Web Scraping | Selenium (`undetected-chromedriver`), BeautifulSoup4 |
-| Data Processing | Pandas (UTF-8-SIG Excel sanitization & deduplication) |
-| Frontend UI | HTML5, CSS3, JavaScript (Bootstrap 4, FontAwesome, jQuery, Jinja2) |
-| Containerization | Docker & Docker Compose |
-| Cloud Hosting | Google Cloud Run |
-| Artifact Repository | GCP Artifact Registry |
-| Secrets Management | GCP Secret Manager |
-| CI/CD | GitHub Actions |
-| Config Management | YAML (`config/config.yaml`) |
+| Layer | Component | Details |
+|---|---|---|
+| **Runtime & Language** | Python | 3.11 (`python:3.11-slim`) |
+| **API Framework** | FastAPI | Async ASGI framework served by Uvicorn |
+| **LLM & Embeddings** | Google Gemini | `gemini-3.1-flash-lite` (Inference), `gemini-embedding-001` (Embeddings) |
+| **RAG Orchestration** | LangChain | `langchain-core`, `langchain-google-genai`, `langchain-astradb` (LCEL) |
+| **Vector Database** | DataStax AstraDB | Cassandra-backed serverless vector database (`shopbuddy` collection) |
+| **Scraper** | Selenium + BS4 | `undetected-chromedriver` with Windows Registry Chrome auto-detection |
+| **Frontend** | Jinja2 + Bootstrap | Bootstrap 4.1.3, jQuery 3.3.1, `marked.js`, Inter Typography |
+| **Infrastructure** | GCP & Docker | Google Cloud Run (`asia-south1`), Artifact Registry, GitHub Actions |
 
 ---
 
-## Project Structure
+## Repository Structure
 
 ```
 ShopBuddy/
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml              # GCP Cloud Run CI/CD pipeline
+│       └── deploy.yml              # CI/CD pipeline for GCP Cloud Run
 ├── config/
-│   ├── config.yaml              # Central configuration (models, DB, retriever settings)
-│   └── config_loader.py         # YAML config loader utility
-├── data/                        # Scraped CSV dataset (1,100+ unique products)
-│   └── product_reviews.csv
+│   ├── __init__.py
+│   ├── config.yaml                 # Model parameters, collection name, top_k settings
+│   └── config_loader.py            # YAML configuration loader
+├── data/
+│   └── product_reviews.csv         # Scraped review dataset
 ├── data_ingestion/
-│   └── ingestion_pipeline.py    # Transforms CSV data and loads into AstraDB with UPSERT IDs
+│   ├── __init__.py
+│   └── ingestion_pipeline.py       # CSV to AstraDB vector ingestion module
 ├── data_scraper/
-│   └── scrape_data.py           # Flipkart product and review scraper (Selenium + BeautifulSoup)
+│   ├── __init__.py
+│   └── scrape_data.py              # Flipkart automated scraping pipeline
+├── notebook/
+│   └── customer_support.ipynb      # Prototyping and experimentation notebook
 ├── prompt_library/
-│   └── prompt.py                # LangChain prompt templates for the RAG chain
+│   ├── __init__.py
+│   └── prompt.py                   # System prompt definitions
 ├── retriever/
-│   ├── retrieval.py             # AstraDB vector store retriever wrapper
-│   └── chain_loader.py          # LCEL chain loader with Gemini 3.1 Flash Lite
+│   ├── __init__.py
+│   ├── retrieval.py                # AstraDB vector retriever implementation
+│   └── chain_loader.py             # LCEL execution chain builder
 ├── static/
-│   ├── style.css                # Modern glassmorphism stylesheet with mobile responsiveness
-│   └── f6634145-...png          # ShopBuddy logo asset
+│   ├── style.css                   # Client styling
+│   └── *.png                       # Application static assets
 ├── templates/
-│   └── chat.html                # Unified Multi-Tab Portal (desktop table + mobile card views)
+│   └── chat.html                   # Unified SPA template
 ├── utils/
-│   └── model_loader.py          # Loads Gemini LLM and embedding model instances
+│   ├── __init__.py
+│   └── model_loader.py             # Model instantiation for embeddings and LLM
 ├── .dockerignore
-├── .env.example                 # Template for required environment variables
-├── Dockerfile                   # Multi-stage container build definition
-├── docker-compose.yml           # Local multi-service development compose file
-├── main.py                      # FastAPI application entry point, health check & API routes
-├── requirements.txt             # Python dependencies
-├── setup.py                     # Python package setup
-└── README.md
+├── .env.example                    # Environment variable schema
+├── .gitignore
+├── docker-compose.yml              # Local container orchestration
+├── Dockerfile                      # Multi-stage production container build
+├── main.py                         # Application entrypoint
+├── requirements.txt                # Production dependencies
+└── setup.py                        # Package definitions and editable install configuration
 ```
 
 ---
 
-## Prerequisites
+## Getting Started
 
-- Python 3.10 or higher
-- Google Chrome (for Selenium-based scraping when running locally)
-- A [DataStax AstraDB](https://astra.datastax.com/) account with a vector-enabled database
-- A [Google AI Studio](https://aistudio.google.com/) API key with access to Gemini models
-- Docker & Docker Compose (optional, for local containerized development)
-- Google Cloud SDK (`gcloud` CLI) for GCP deployment
+### Prerequisites
 
----
+- **Python**: `>= 3.11`
+- **Google Chrome**: Latest stable version (required for local Selenium scraping)
+- **Google AI Studio API Key**: For Gemini LLM and Embedding models
+- **DataStax AstraDB Account**: Token, API endpoint, and keyspace
+- **Docker & Docker Compose** *(Optional)*: `>= 20.x`
 
-## Installation
+### Installation
 
-**1. Clone the repository**
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/Areeb-Ahmd/ShopBuddy.git](https://github.com/Areeb-Ahmd/ShopBuddy.git)
+   cd ShopBuddy
+   ```
 
-```bash
-git clone https://github.com/Areeb-Ahmd/ShopBuddy.git
-cd ShopBuddy
-```
+2. **Set up a virtual environment:**
+   ```bash
+   python -m venv venv
+   
+   # Linux/macOS
+   source venv/bin/activate
+   
+   # Windows
+   venv\Scripts\activate
+   ```
 
-**2. Create and activate a virtual environment**
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   pip install -e .
+   ```
 
-```bash
-python -m venv venv
+4. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` with your credentials:
+   ```env
+   GOOGLE_API_KEY="AIzaSyD..."
+   ASTRA_DB_API_ENDPOINT="https://<db-id>-<region>.apps.astra.datastax.com"
+   ASTRA_DB_APPLICATION_TOKEN="AstraCS:..."
+   ASTRA_DB_KEYSPACE="default_keyspace"
+   DEPLOYMENT_ENV="local"
+   PORT="8080"
+   ```
 
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
-```
-
-**3. Install dependencies**
-
-```bash
-pip install -r requirements.txt
-pip install -e .
-```
-
----
-
-## Configuration
-
-**1. Create a `.env` file** in the project root based on `.env.example`:
-
-```env
-GOOGLE_API_KEY=your_google_api_key
-ASTRA_DB_API_ENDPOINT=your_astradb_api_endpoint
-ASTRA_DB_APPLICATION_TOKEN=your_astradb_application_token
-ASTRA_DB_KEYSPACE=your_astradb_keyspace
-DEPLOYMENT_ENV=local
-PORT=8080
-```
-
-**2. Review `config/config.yaml`** to adjust model names, AstraDB collection name, and retriever `top_k`:
-
-```yaml
-astra_db:
-  collection_name: "shopbuddy"
-
-embedding_model:
-  provider: "google"
-  model_name: "models/gemini-embedding-001"
-
-retriever:
-  top_k: 10
-
-llm:
-  provider: "google"
-  model_name: "gemini-3.1-flash-lite"
-```
+5. **Start the application:**
+   ```bash
+   python main.py
+   # Alternatively:
+   uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+   ```
+   Access the web interface at `http://localhost:8080`.
 
 ---
 
-## Usage
+## Running with Docker
 
-Start the application server locally:
-
+### Local Orchestration with Docker Compose
 ```bash
-python main.py
-```
-*or*
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
-```
-
-Open your browser and navigate to `http://localhost:8080` to access all features:
-
-- 💬 **AI Assistant Tab**: Ask product queries and get AI answers backed by Gemini and AstraDB vector retrieval.
-- 📦 **Scraper & Ingestion Tab**: Search and scrape Flipkart reviews locally, then store embeddings into AstraDB.
-- 📊 **Reviews Explorer Tab**: Filter, search, and browse 1,100+ cataloged product reviews with live search. On mobile, products are displayed as native card views for optimal usability.
-
----
-
-## Docker & Docker Compose
-
-### Local Development with Docker Compose
-
-Run the entire application locally via Docker Compose (with `DEPLOYMENT_ENV=local` so scraper endpoints are enabled):
-
-```cmd
 docker compose up --build -d
 ```
 
-Check application health:
-
-```cmd
-curl http://localhost:8080/health
+### Direct Docker CLI Build
+```bash
+docker build -t shopbuddy .
+docker run -p 8080:8080 --env-file .env shopbuddy
 ```
 
-Stop container:
+---
 
-```cmd
-docker compose down
+## Data Pipeline Workflows
+
+> **Environment Note:** Web scraping and ingestion endpoints are operational only when `DEPLOYMENT_ENV=local`. They are gated (403 Forbidden) on cloud deployments (`DEPLOYMENT_ENV=gcp`).
+
+### 1. Web Scraping
+Scrapes product details (product ID, title, price, rating, total reviews, and customer reviews) directly from Flipkart.
+
+- **Via Web UI**: Open `http://localhost:8080`, navigate to the **Scraper & Ingestion** tab, enter product keywords, and execute.
+- **Via REST Endpoint**:
+  ```bash
+  curl -X POST http://localhost:8080/api/scrape \
+    -H "Content-Type: application/json" \
+    -d '{
+      "product_inputs": ["wireless headphones", "mechanical keyboard"],
+      "product_description": "budget options under 5000",
+      "max_products": 5,
+      "review_count": 3
+    }'
+  ```
+
+### 2. Vector Store Ingestion
+Converts records in `data/product_reviews.csv` into LangChain `Document` objects with metadata and batch-upserts them into AstraDB.
+
+- **Via REST Endpoint**:
+  ```bash
+  curl -X POST http://localhost:8080/api/ingest
+  ```
+- **Via Python Module**:
+  ```bash
+  python -m data_ingestion.ingestion_pipeline
+  ```
+
+---
+
+## API Reference
+
+| Method | Route | Description | Environment Availability |
+|---|---|---|---|
+| `GET` | `/` | Serves unified SPA (Chatbot, Scraper, Reviews Explorer) | Local & Cloud |
+| `GET` | `/health` | Health check endpoint for Cloud Run liveness probes | Local & Cloud |
+| `POST` | `/get` | Queries RAG pipeline with user question and returns Markdown response | Local & Cloud |
+| `GET` | `/api/reviews` | Returns all scraped reviews from CSV in JSON format | Local & Cloud |
+| `POST` | `/api/scrape` | Executes Flipkart product review scraper pipeline | Local Only |
+| `POST` | `/api/ingest` | Ingests local CSV records into AstraDB vector store | Local Only |
+| `GET` | `/api/download` | Downloads `data/product_reviews.csv` | Local Only |
+
+---
+
+## Configuration Reference
+
+Central settings are managed in `config/config.yaml`:
+
+```yaml
+astra_db:
+  collection_name: "shopbuddy"         # AstraDB vector collection name
+
+embedding_model:
+  provider: "google"
+  model_name: "models/gemini-embedding-001"   # Embedding model identifier
+
+retriever:
+  top_k: 10                            # Number of retrieved context chunks
+
+llm:
+  provider: "google"
+  model_name: "gemini-3.1-flash-lite"  # Generation LLM identifier
 ```
 
 ---
 
 ## Google Cloud Run Deployment
 
-### 1. Initial Setup via gcloud CLI
-
-```cmd
+### 1. Initialize GCP Services
+```bash
 gcloud config set project shopbuddy-504620
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com cloudbuild.googleapis.com
 ```
 
-### 2. Create Artifact Registry Repository
-
-```cmd
-gcloud artifacts repositories create shopbuddy-repo --repository-format=docker --location=asia-south1 --description="ShopBuddy Docker images"
+### 2. Provision Artifact Registry Repository
+```bash
+gcloud artifacts repositories create shopbuddy-repo \
+  --repository-format=docker \
+  --location=asia-south1 \
+  --description="ShopBuddy Docker images"
 ```
 
 ### 3. Store Secrets in Secret Manager
-
-```cmd
+```bash
 echo YOUR_GOOGLE_API_KEY | gcloud secrets create GOOGLE_API_KEY --data-file=- --replication-policy=automatic
 echo YOUR_ASTRA_DB_API_ENDPOINT | gcloud secrets create ASTRA_DB_API_ENDPOINT --data-file=- --replication-policy=automatic
 echo YOUR_ASTRA_DB_APPLICATION_TOKEN | gcloud secrets create ASTRA_DB_APPLICATION_TOKEN --data-file=- --replication-policy=automatic
 echo YOUR_ASTRA_DB_KEYSPACE | gcloud secrets create ASTRA_DB_KEYSPACE --data-file=- --replication-policy=automatic
 ```
 
-### 4. Create Service Account & Grant Permissions
-
-```cmd
+### 4. Create Service Account and Assign IAM Roles
+```bash
 gcloud iam service-accounts create github-actions-deployer --display-name="GitHub Actions Cloud Run Deployer"
 
 gcloud projects add-iam-policy-binding shopbuddy-504620 --member="serviceAccount:github-actions-deployer@shopbuddy-504620.iam.gserviceaccount.com" --role="roles/run.admin"
@@ -280,9 +330,8 @@ gcloud projects add-iam-policy-binding shopbuddy-504620 --member="serviceAccount
 gcloud projects add-iam-policy-binding shopbuddy-504620 --member="serviceAccount:672313940192-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor"
 ```
 
-### 5. Generate Key JSON
-
-```cmd
+### 5. Generate Key File for CI/CD
+```bash
 gcloud iam service-accounts keys create key.json --iam-account=github-actions-deployer@shopbuddy-504620.iam.gserviceaccount.com
 ```
 
@@ -290,27 +339,14 @@ gcloud iam service-accounts keys create key.json --iam-account=github-actions-de
 
 ## CI/CD Pipeline
 
-The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and deploys the container to **Google Cloud Run** whenever changes are pushed to the `main` branch.
+The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and deploys the container to **Google Cloud Run** on pushes to the `main` branch.
 
-**Required GitHub Repository Secrets:**
+### Required GitHub Repository Secrets
 
 | Secret Name | Description |
 |---|---|
-| `GCP_SA_KEY` | Contents of `key.json` service account private key |
+| `GCP_SA_KEY` | Full contents of the `key.json` service account private key |
 | `GCP_PROJECT_ID` | GCP Project ID (`shopbuddy-504620`) |
-
----
-
-## Environment Variables
-
-| Variable | Required | Description | Default |
-|---|---|---|---|
-| `GOOGLE_API_KEY` | Yes | API key for Google Gemini (LLM and embeddings) | - |
-| `ASTRA_DB_API_ENDPOINT` | Yes | DataStax AstraDB REST API endpoint | - |
-| `ASTRA_DB_APPLICATION_TOKEN` | Yes | DataStax AstraDB application token | - |
-| `ASTRA_DB_KEYSPACE` | Yes | AstraDB keyspace (namespace) to use | `default_keyspace` |
-| `DEPLOYMENT_ENV` | No | Set to `gcp` on Cloud Run to gate local-only features | `local` |
-| `PORT` | No | Web server port injected by Cloud Run or local server | `8080` |
 
 ---
 
@@ -324,4 +360,8 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml
 
 ---
 
-**Author:** Syed Areeb Ahmad — [ahmad.syedareeb7@gmail.com](mailto:ahmad.syedareeb7@gmail.com) | [GitHub](https://github.com/Areeb-Ahmd) | [LinkedIn](https://www.linkedin.com/in/areeb-ahmad7)
+## Author
+
+- **Syed Areeb Ahmad** — [ahmad.syedareeb7@gmail.com](mailto:ahmad.syedareeb7@gmail.com)
+- **GitHub**: [@Areeb-Ahmd](https://github.com/Areeb-Ahmd)
+- **LinkedIn**: [areeb-ahmad7](https://www.linkedin.com/in/areeb-ahmad7)
